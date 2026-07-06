@@ -86,7 +86,7 @@ def test_dedupes_by_identical_fingerprint_and_merges_metadata() -> None:
     }
 
 
-def test_dedupes_without_fingerprint_using_stable_fallback_identity() -> None:
+def test_dedupes_exact_without_fingerprint_using_stable_fallback_identity() -> None:
     duplicate = _event(
         timestamp="2026-07-06T10:00:00Z",
         source="monitor",
@@ -101,7 +101,6 @@ def test_dedupes_without_fingerprint_using_stable_fallback_identity() -> None:
             duplicate,
             {
                 **duplicate,
-                "severity": "critical",
                 "zone": "us-east",
                 "detail": "same core event with updated fields",
             },
@@ -117,12 +116,34 @@ def test_dedupes_without_fingerprint_using_stable_fallback_identity() -> None:
 
     assert len(result) == 2
     assert result[0]["message"] == "error rate high"
-    assert result[0]["severity"] == "critical"
     assert result[0]["metadata"] == {
         "zone": "us-east",
         "detail": "same core event with updated fields",
     }
     assert result[1]["message"] == "database pool exhausted"
+
+
+def test_fallback_identity_preserves_non_exact_events_with_different_severity() -> None:
+    result = normalize_timeline(
+        [
+            _event(
+                timestamp="2026-07-06T10:00:00Z",
+                source="monitor",
+                service="checkout",
+                message="error rate high",
+                severity="critical",
+            ),
+            _event(
+                timestamp="2026-07-06T10:00:00Z",
+                source="monitor",
+                service="checkout",
+                message="error rate high",
+                severity="warning",
+            ),
+        ]
+    )
+
+    assert [event["severity"] for event in result] == ["critical", "warning"]
 
 
 def test_preserves_unknown_fields_as_metadata() -> None:

@@ -28,6 +28,7 @@ def render_digest_from_timeline(
     severity = _current_severity(timeline)
     warnings = escalation.breached_policies or ["No SLA breaches detected"]
     errors = list(getattr(timeline, "errors", []))
+    skipped_event_count = _skipped_event_count(errors)
 
     lines = [
         "# Incident Digest",
@@ -37,7 +38,7 @@ def render_digest_from_timeline(
         f"- Affected services: {', '.join(services) if services else 'None'}",
         f"- Escalation level: {escalation.level.name.lower()}",
         f"- Evaluated events: {escalation.evaluated_event_count}",
-        f"- Skipped events: {escalation.skipped_event_count + len(errors)}",
+        f"- Skipped events: {escalation.skipped_event_count + skipped_event_count}",
         "",
         "## Breach Warnings",
     ]
@@ -92,6 +93,11 @@ def _affected_services(timeline: Iterable[Mapping[str, Any]]) -> list[str]:
             if str(event.get("service", "")).strip()
         }
     )
+
+
+def _skipped_event_count(errors: Iterable[Mapping[str, Any]]) -> int:
+    indexes = {error.get("index") for error in errors if "index" in error}
+    return len(indexes)
 
 
 def _current_severity(timeline: Iterable[Mapping[str, Any]]) -> str:

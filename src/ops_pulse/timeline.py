@@ -171,6 +171,7 @@ def _dedupe_identity(event: Mapping[str, Any]) -> str:
     fallback_parts = {
         "timestamp": event["timestamp"],
         "source": event["source"],
+        "severity": event["severity"],
         "service": event["service"],
         "message": event["message"],
     }

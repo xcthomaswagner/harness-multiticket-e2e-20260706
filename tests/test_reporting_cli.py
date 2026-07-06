@@ -49,10 +49,22 @@ def test_digest_reports_timeline_validation_warnings() -> None:
         ]
     )
 
-    assert "- Skipped events: 2" in digest
+    assert "- Skipped events: 1" in digest
     assert "## Input Warnings" in digest
     assert "- Event 1 (severity): missing required field: severity" in digest
     assert "- Event 1 (message): missing required field: message" in digest
+
+
+def test_digest_counts_unique_skipped_events_not_validation_errors() -> None:
+    digest = render_incident_digest(
+        [
+            _event(message="valid"),
+            {"timestamp": "not-a-date", "source": "monitor", "service": "checkout"},
+            {"timestamp": "also-not-a-date", "source": "monitor"},
+        ]
+    )
+
+    assert "- Skipped events: 2" in digest
 
 
 def test_digest_treats_warning_severity_as_current_medium_severity() -> None:
