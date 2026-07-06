@@ -10,7 +10,8 @@ and testable):
 
 Severity ordering
     ``info < low < medium < high < critical`` (see :class:`Severity`). Severity strings
-    are matched case-insensitively. An unrecognized severity makes the event *malformed*.
+    are matched case-insensitively, with common monitoring aliases such as ``warning``
+    mapped into the same scale. An unrecognized severity makes the event *malformed*.
 
 Affected-service to escalation weight
     :data:`SERVICE_WEIGHTS` maps a known service name (case-insensitive) to a weight in
@@ -79,8 +80,18 @@ class Severity(IntEnum):
         """Return the matching member for ``value`` (case-insensitive) or ``None``."""
         if not isinstance(value, str):
             return None
+        aliases = {
+            "WARN": cls.MEDIUM,
+            "WARNING": cls.MEDIUM,
+            "ERROR": cls.HIGH,
+            "SEVERE": cls.HIGH,
+            "FATAL": cls.CRITICAL,
+        }
+        normalized = value.strip().upper()
+        if normalized in aliases:
+            return aliases[normalized]
         try:
-            return cls[value.strip().upper()]
+            return cls[normalized]
         except KeyError:
             return None
 

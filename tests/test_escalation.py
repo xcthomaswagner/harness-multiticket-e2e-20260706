@@ -129,6 +129,21 @@ def test_affected_service_changes_level_without_changing_severity_or_elapsed_tim
     assert high_impact.level > low_impact.level
 
 
+def test_common_monitoring_severity_aliases_are_evaluated() -> None:
+    result = evaluate_escalation(
+        [
+            event("warning", "api", "2026-07-06T00:00:00Z"),
+            event("error", "api", "2026-07-06T00:05:00Z"),
+            event("fatal", "auth", "2026-07-06T00:10:00Z"),
+        ]
+    )
+
+    assert result.evaluated_event_count == 3
+    assert result.skipped_event_count == 0
+    assert result.highest_severity is Severity.CRITICAL
+    assert result.level is EscalationLevel.HIGH
+
+
 def test_malformed_events_are_skipped_consistently() -> None:
     result = evaluate_escalation(
         [
